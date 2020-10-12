@@ -130,7 +130,7 @@ def append_photo(message):
 
 @bot.message_handler(content_types=['text'])
 def reply(message):
-    global user_id, last
+    global user_id, last, photos
     if find_object_by_user(message.from_user.id) == -1:
         ids.append(UserAnd12(message.from_user.id))
     user_object = find_object_by_user(message.from_user.id)
@@ -143,15 +143,16 @@ def reply(message):
     elif message.text == phrase2:
         user_object.one_or_two = 2
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        item = types.KeyboardButton("готово")
-        markup.add(item)
+        item1 = types.KeyboardButton("готово")
+        item2= types.KeyboardButton("отмена")
+        markup.add(item1, item2)
         bot.send_message(message.chat.id,
                          'Тогда просто кидай фотки, а я сделаю всё остальное.' +
                          ' Когда все фотки загрузятся, нажми кнопку "готово"',
                          reply_markup=markup)
 
     elif message.text == "готово":
-        global user, photos
+        global user
         if len(photos) == 0:
             bot.send_message(message.chat.id, "Сначала скинь фотки")
         else:
@@ -163,7 +164,8 @@ def reply(message):
         global saved_index
         find_document(message, saved_index, last)
 
-    elif message.text == "Не, не надо":
+    elif message.text == "Не, не надо" or message.text == "отмена":
+        photos.clear()
         send_cycle(message)
 
 
