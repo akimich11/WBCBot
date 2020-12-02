@@ -8,19 +8,6 @@ if __name__ == '__main__':
     vars.bot.send_message(270241310, "перезагрузился")
 
 
-def send_cycle(message):
-    if processes.find_object_by_user(message.from_user.id) == -1:
-        vars.ids.append(vars.UserAnd12(message.from_user.id))
-    user_object = processes.find_object_by_user(message.from_user.id)
-    user_object.one_or_two = 0
-    vars.last = ""
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item1 = types.KeyboardButton(vars.phrase1)
-    item2 = types.KeyboardButton(vars.phrase2)
-    markup.add(item1, item2)
-    vars.bot.send_message(message.chat.id, "Что-нибудь ещё?", reply_markup=markup)
-
-
 def create_markup(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
     item1 = types.InlineKeyboardButton("МА практика", callback_data='1')

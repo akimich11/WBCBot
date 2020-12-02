@@ -1,6 +1,18 @@
 import vars
 from telebot import types
-from bot import send_cycle
+
+
+def send_cycle(message):
+    if find_object_by_user(message.from_user.id) == -1:
+        vars.ids.append(vars.UserAnd12(message.from_user.id))
+    user_object = find_object_by_user(message.from_user.id)
+    user_object.one_or_two = 0
+    vars.last = ""
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item1 = types.KeyboardButton(vars.phrase1)
+    item2 = types.KeyboardButton(vars.phrase2)
+    markup.add(item1, item2)
+    vars.bot.send_message(message.chat.id, "Что-нибудь ещё?", reply_markup=markup)
 
 
 def find_object_by_user(u_id):
