@@ -55,5 +55,5 @@ def write_pdf_id(user, button_index, doc):
     f = open('photos/' + vars.FolderNames[button_index] + '/' + vars.FolderNames[button_index] + '.txt', 'w')
     tz = pytz.timezone('Europe/Minsk')
     now = datetime.datetime.now(tz)
-    f.write(lines + str(user.user_id) + '/' + doc.document.file_id + '/' + now.strftime("%d-%m-%Y в %H:%M") + '\n')
+    f.write(lines + str(user.user_id) + '/' + doc.document.file_id + '/' + now.strftime("%d-%m-%Y, %H:%M") + '\n')
     f.close()
