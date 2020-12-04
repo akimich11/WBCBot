@@ -2,9 +2,11 @@ import telebot
 from enum import Enum
 
 bot = telebot.TeleBot('1165511829:AAFV6MBiSUdIbxr6GVQ51B01Qhm9vz2psF4', threaded=False)
-ids = []
+users = []
+DEL = '\\'
 phrase1 = "Найти дз"
 phrase2 = "Отправить тетрадку"
+accepted_formats = ["jpg", "jpeg"]
 FolderNames = [
     "МА практика",
     "ДУ практика",
@@ -25,9 +27,10 @@ class Button(Enum):
 
 class User:
     user_id = 0
-    subject_id = -1
     first_name = ""
+    subject_id = -1
     photos = []
+    files = []
     button_state = Button(3)
 
     def __init__(self, user_id, first_name):

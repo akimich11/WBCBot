@@ -1,53 +1,43 @@
-import variables
+import variables as v
 from telebot import types
 
 
 def send_cycle(user):
-    user.button_state = variables.Button.NONE
-    variables.last = ""
+    user.button_state = v.Button.NONE
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item1 = types.KeyboardButton(variables.phrase1)
-    item2 = types.KeyboardButton(variables.phrase2)
+    item1 = types.KeyboardButton(v.phrase1)
+    item2 = types.KeyboardButton(v.phrase2)
     markup.add(item1, item2)
-    variables.bot.send_message(user.user_id, "Что-нибудь ещё?", reply_markup=markup)
+    v.bot.send_message(user.user_id, "Что-нибудь ещё?", reply_markup=markup)
 
 
-def find_user_by_id(user_id):
-    for i in variables.ids:
-        if i.user_id == user_id:
+def get_user(user_id, first_name):
+    for i in v.users:
+        if i.user_id == int(user_id):
             return i
-    return -1
+    user = v.User(user_id, first_name)
+    v.users.append(user)
+    return user
 
 
 def get_file_id(subject, number_of_line):
-    file = open('photos/' + variables.FolderNames[subject] + '/' + variables.FolderNames[subject] + '.csv', "r")
-    return file.read().split("\n")[number_of_line].split(",")[2]
+    file = open('photos' + v.DEL + v.FolderNames[subject] + v.DEL + v.FolderNames[subject] + '.csv', "r")
+    file_data = file.read()
+    file.close()
+    return file_data.split("\n")[number_of_line].split(",")[2]
 
 
 def get_documents_list(index):
-    file = open('photos/' + variables.FolderNames[index] + '/' + variables.FolderNames[index] + '.csv', "r")
+    file = open('photos' + v.DEL + v.FolderNames[index] + v.DEL + v.FolderNames[index] + '.csv', "r")
     lines = file.read().split("\n")
     file.close()
-    documents = variables.FolderNames[index] + ":\n\n"
+    documents = v.FolderNames[index] + ":\n\n"
     n = 0
     for line in lines:
         if line != "":
             n += 1
             user_id, first_name, file_id, change_date = line.split(",")
             documents += (str(n) + ". Изменён " + change_date + ". " + first_name + "\n")
-
-    # if len(found_line) != 0:
-    #     vars.last = found_line
-    #     vars.bot.send_document(user.user_id, found_line.split(",")[1], caption="Изменён " + found_line.split(",")[2])
-    #     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    #     item1 = types.KeyboardButton("Поискать")
-    #     item2 = types.KeyboardButton("Не, не надо")
-    #     markup.add(item1, item2)
-    #     vars.bot.send_message(user.user_id, "Могу поискать ещё. Поискать?", reply_markup=markup)
-    # else:
-    #     vars.bot.send_message(user.user_id, "Ничего не нашёл :(")
-    #     send_cycle(user)
-
     return [documents, n]
 
 

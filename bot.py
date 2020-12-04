@@ -39,17 +39,23 @@ def welcome(message):
 
 @v.bot.message_handler(content_types=['photo'])
 def append_photo(message):
-    if proc.find_user_by_id(message.from_user.id) == -1:
-        v.ids.append(v.User(message.from_user.id, message.from_user.first_name))
-    user = proc.find_user_by_id(message.from_user.id)
+    user = proc.get_user(message.from_user.id, message.from_user.first_name)
     user.photos.append(message.photo[-1].file_id)
+
+
+@v.bot.message_handler(content_types=['document'])
+def append_file(message):
+    user = proc.get_user(message.from_user.id, message.from_user.first_name)
+    extension = message.document.file_name.split(".")[1]
+    if extension.lower() in v.accepted_formats:
+        user.files.append(message.document.file_id)
+    else:
+        v.bot.send_message(message.chat.id, "Расширение файла (" + extension + ") не поддерживается")
 
 
 @v.bot.message_handler(content_types=['text'])
 def reply(message):
-    if proc.find_user_by_id(message.from_user.id) == -1:
-        v.ids.append(v.User(message.from_user.id, message.from_user.first_name))
-    user = proc.find_user_by_id(message.from_user.id)
+    user = proc.get_user(message.from_user.id, message.from_user.first_name)
 
     if message.text == v.phrase1:
         user.button_state = v.Button.FIND
@@ -66,13 +72,6 @@ def reply(message):
                            ' Когда все фотки загрузятся, нажми кнопку "готово"',
                            reply_markup=markup)
 
-    elif user.subject_id != -1:
-        key = int(message.text)
-        file_id = proc.get_file_id(user.subject_id, key - 1)
-        v.bot.send_document(user.user_id, file_id)
-        user.subject_id = -1
-        proc.send_cycle(user)
-
     elif message.text == "готово":
         if len(user.photos) == 0:
             v.bot.send_message(message.chat.id, "Сначала скинь фотки")
@@ -81,6 +80,15 @@ def reply(message):
 
     elif message.text == "отмена":
         user.photos.clear()
+        user.files.clear()
+        user.subject_id = -1
+        proc.send_cycle(user)
+
+    elif user.subject_id != -1:
+        key = int(message.text)
+        file_id = proc.get_file_id(user.subject_id, key - 1)
+        v.bot.send_document(user.user_id, file_id)
+        user.subject_id = -1
         proc.send_cycle(user)
 
 
@@ -88,13 +96,11 @@ def reply(message):
 def callback_inline(call):
     if call.message:
         user_id, first_name, number = call.data.split(",")
-        if proc.find_user_by_id(int(user_id)) == -1:
-            v.ids.append(v.User(int(user_id), first_name))
-        user = proc.find_user_by_id(int(user_id))
+        user = proc.get_user(user_id, first_name)
         button_index = int(number) - 1
 
         if user.button_state == v.Button.SEND:
-            idx = pdf_maker.download_photos(user, button_index)
+            idx = pdf_maker.download(user, button_index)
             filename = pdf_maker.create_pdf(user, button_index, idx)
             v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
                                     text="Фотографии добавлены", reply_markup=None)
