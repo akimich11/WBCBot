@@ -21,17 +21,17 @@ def get_user(user_id, first_name):
 
 
 def get_file_id(subject, number_of_line):
-    file = open('photos' + v.DEL + v.FolderNames[subject] + v.DEL + v.FolderNames[subject] + '.csv', "r")
+    file = open('photos' + v.DEL + v.folders[subject] + v.DEL + v.folders[subject] + '.csv', "r")
     file_data = file.read()
     file.close()
     return file_data.split("\n")[number_of_line].split(",")[2]
 
 
 def get_documents_list(index):
-    file = open('photos' + v.DEL + v.FolderNames[index] + v.DEL + v.FolderNames[index] + '.csv', "r")
+    file = open('photos' + v.DEL + v.folders[index] + v.DEL + v.folders[index] + '.csv', "r")
     lines = file.read().split("\n")
     file.close()
-    documents = v.FolderNames[index] + ":\n\n"
+    documents = v.folders[index] + ":\n\n"
     n = 0
     for line in lines:
         if line != "":

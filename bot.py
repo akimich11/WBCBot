@@ -1,4 +1,4 @@
-import pdf_maker
+import pdf_maker as pdf
 import processes as proc
 import variables as v
 from telebot import types
@@ -73,7 +73,7 @@ def reply(message):
                            reply_markup=markup)
 
     elif message.text == "готово":
-        if len(user.photos) == 0:
+        if len(user.photos) == 0 and len(user.files) == 0:
             v.bot.send_message(message.chat.id, "Сначала скинь фотки")
         else:
             create_markup(message)
@@ -100,12 +100,12 @@ def callback_inline(call):
         button_index = int(number) - 1
 
         if user.button_state == v.Button.SEND:
-            idx = pdf_maker.download(user, button_index)
-            filename = pdf_maker.create_pdf(user, button_index, idx)
+            idx = pdf.update_photos(user, button_index)
+            filename = pdf.create_pdf(user, button_index, idx)
             v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
                                     text="Фотографии добавлены", reply_markup=None)
-            doc = v.bot.send_document(call.message.chat.id, open(filename, "rb"))
-            pdf_maker.write_pdf_id(user, button_index, doc)
+            doc_id = v.bot.send_document(call.message.chat.id, open(filename, "rb"))
+            pdf.write_pdf_id(user, button_index, doc_id)
             proc.send_cycle(user)
 
         elif user.button_state == v.Button.FIND:

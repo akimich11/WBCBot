@@ -1,4 +1,4 @@
-import processes
+import processes as proc
 import variables as v
 import os
 import glob
@@ -7,57 +7,69 @@ import datetime
 from PIL import Image
 
 
-def download_files(files, directory, button_index, idx):
-    for j in files:
-        my_photo = v.bot.get_file(j)
-        filename, file_extension = os.path.splitext(my_photo.file_path)
-        src = 'photos' + v.DEL + v.FolderNames[button_index] + v.DEL + directory + v.DEL + str(idx) + file_extension
+def download_files(file_ids, directory, idx):
+    for f_id in file_ids:
+        file_to_save = v.bot.get_file(f_id)
+        file_extension = os.path.splitext(file_to_save.file_path)[1]
+        filename = directory + v.DEL + str(idx) + file_extension.lower()
         idx += 1
-        with open(src, "wb") as new_file:
-            new_file.write(v.bot.download_file(my_photo.file_path))
-        new_file.close()
-    files.clear()
+        with open(filename, "wb") as new_file:
+            new_file.write(v.bot.download_file(file_to_save.file_path))
+    file_ids.clear()
     return idx
 
 
-def download(user, button_index):
+def update_photos(user, subject_id):
     idx = 1
-    parent_dir = 'photos' + v.DEL + v.FolderNames[button_index]
+    parent_dir = 'photos' + v.DEL + v.folders[subject_id]
     directory = str(user.user_id)
     path = os.path.join(parent_dir, directory)
     if not os.path.isdir(path):
         os.mkdir(path)
     else:
         jpg_list = glob.glob(path + v.DEL + '*.jpg')
+        jpg_list += glob.glob(path + v.DEL + '*.jpeg')
+        jpg_list += glob.glob(path + v.DEL + '*.png')
         max_el = 0
         for i in jpg_list:
             a = int((i.split(v.DEL)[-1]).split(".")[0])
             if a > max_el:
                 max_el = a
         idx = max_el + 1
-    idx = download_files(user.photos, directory, button_index, idx)
-    idx = download_files(user.files, directory, button_index, idx)
-    return idx
+    directory = parent_dir + v.DEL + directory
+    idx = download_files(user.photos, directory, idx)
+    return download_files(user.files, directory, idx)
 
 
-def create_pdf(user, button_index, idx):
+def open_image(filename):
+    try:
+        image = Image.open(filename + ".jpg")
+    except FileNotFoundError:
+        try:
+            image = Image.open(filename + ".jpeg")
+        except FileNotFoundError:
+            image = Image.open(filename + ".png")
+            image = image.convert('RGB')
+    return image
+
+
+def create_pdf(user, subject_id, idx):
     im_list = []
-    directory = str(user.user_id)
-    im1 = Image.open('photos' + v.DEL + v.FolderNames[button_index] + v.DEL + directory + v.DEL + "1.jpg")
+    directory = 'photos' + v.DEL + v.folders[subject_id] + v.DEL + str(user.user_id)
+    im1 = open_image(directory + v.DEL + "1")
+
     for i in range(idx - 2):
-        im_list.append(
-            Image.open('photos' + v.DEL + v.FolderNames[button_index] + v.DEL + directory + v.DEL + str(i + 2) + ".jpg"))
-    pdf1_filename = 'photos' + v.DEL + v.FolderNames[button_index] + v.DEL + directory + v.DEL + \
-                    v.FolderNames[button_index] + "_" + user.first_name + ".pdf"
-    im1.save(pdf1_filename, "PDF", resolution=100.0, save_all=True, append_images=im_list)
-    return pdf1_filename
+        im_list.append(open_image(directory + v.DEL + str(i + 2)))
+    pdf_filename = directory + v.DEL + v.folders[subject_id] + "_" + user.first_name + ".pdf"
+    im1.save(pdf_filename, "PDF", resolution=100.0, save_all=True, append_images=im_list)
+    return pdf_filename
 
 
-def write_pdf_id(user, button_index, doc):
-    f = open('photos' + v.DEL + v.FolderNames[button_index] + v.DEL + v.FolderNames[button_index] + '.csv', 'r')
-    lines = processes.remove_line_by_id(f, str(user.user_id))
+def write_pdf_id(user, subject_id, doc):
+    f = open('photos' + v.DEL + v.folders[subject_id] + v.DEL + v.folders[subject_id] + '.csv', 'r')
+    lines = proc.remove_line_by_id(f, str(user.user_id))
     f.close()
-    f = open('photos' + v.DEL + v.FolderNames[button_index] + v.DEL + v.FolderNames[button_index] + '.csv', 'w')
+    f = open('photos' + v.DEL + v.folders[subject_id] + v.DEL + v.folders[subject_id] + '.csv', 'w')
     tz = pytz.timezone('Europe/Minsk')
     now = datetime.datetime.now(tz)
     f.write(lines + str(user.user_id) + ',' + user.first_name + "," + doc.document.file_id + ',' +
