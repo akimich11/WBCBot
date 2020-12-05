@@ -9,16 +9,15 @@ if __name__ == '__main__':
 
 def create_markup(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    user_data = str(message.from_user.id) + "," + message.from_user.first_name + ","
-    item1 = types.InlineKeyboardButton("МА практика", callback_data=user_data + '1')
-    item2 = types.InlineKeyboardButton("ДУ практика", callback_data=user_data + '2')
-    item3 = types.InlineKeyboardButton("ДМиМЛ практика", callback_data=user_data + '3')
-    item4 = types.InlineKeyboardButton("ВМА практика", callback_data=user_data + '4')
-    item5 = types.InlineKeyboardButton("МА конспект", callback_data=user_data + '5')
-    item6 = types.InlineKeyboardButton("ДУ конспект", callback_data=user_data + '6')
-    item7 = types.InlineKeyboardButton("ДМиМЛ конспект", callback_data=user_data + '7')
-    item8 = types.InlineKeyboardButton("ВМА конспект", callback_data=user_data + '8')
-    item9 = types.InlineKeyboardButton("Другое", callback_data=user_data + '9')
+    item1 = types.InlineKeyboardButton("МА практика", callback_data='1')
+    item2 = types.InlineKeyboardButton("ДУ практика", callback_data='2')
+    item3 = types.InlineKeyboardButton("ДМиМЛ практика", callback_data='3')
+    item4 = types.InlineKeyboardButton("ВМА практика", callback_data='4')
+    item5 = types.InlineKeyboardButton("МА конспект", callback_data='5')
+    item6 = types.InlineKeyboardButton("ДУ конспект", callback_data='6')
+    item7 = types.InlineKeyboardButton("ДМиМЛ конспект", callback_data='7')
+    item8 = types.InlineKeyboardButton("ВМА конспект", callback_data='8')
+    item9 = types.InlineKeyboardButton("Другое", callback_data='9')
 
     markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
     v.bot.send_message(message.chat.id, 'Из какой тетрадки?', reply_markup=markup)
@@ -39,13 +38,13 @@ def welcome(message):
 
 @v.bot.message_handler(content_types=['photo'])
 def append_photo(message):
-    user = proc.get_user(message.from_user.id, message.from_user.first_name)
+    user = proc.get_user(message)
     user.photos.append(message.photo[-1].file_id)
 
 
 @v.bot.message_handler(content_types=['document'])
 def append_file(message):
-    user = proc.get_user(message.from_user.id, message.from_user.first_name)
+    user = proc.get_user(message)
     extension = message.document.file_name.split(".")[1]
     if extension.lower() in v.accepted_formats:
         user.files.append(message.document.file_id)
@@ -55,7 +54,7 @@ def append_file(message):
 
 @v.bot.message_handler(content_types=['text'])
 def reply(message):
-    user = proc.get_user(message.from_user.id, message.from_user.first_name)
+    user = proc.get_user(message)
 
     if message.text == v.phrase1:
         user.button_state = v.Button.FIND
@@ -95,17 +94,17 @@ def reply(message):
 @v.bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     if call.message:
-        user_id, first_name, number = call.data.split(",")
-        user = proc.get_user(user_id, first_name)
-        button_index = int(number) - 1
+        user = proc.get_user(call)
+        button_index = int(call.data) - 1
 
         if user.button_state == v.Button.SEND:
             idx = pdf.update_photos(user, button_index)
-            filename = pdf.create_pdf(user, button_index, idx)
+            filenames = pdf.create_pdf(user, button_index, idx)
             v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
                                     text="Фотографии добавлены", reply_markup=None)
-            doc_id = v.bot.send_document(call.message.chat.id, open(filename, "rb"))
-            pdf.write_pdf_id(user, button_index, doc_id)
+            for filename in filenames:
+                doc_id = v.bot.send_document(call.message.chat.id, open(filename, "rb"))
+                pdf.write_pdf_id(user, button_index, doc_id)
             proc.send_cycle(user)
 
         elif user.button_state == v.Button.FIND:

@@ -43,33 +43,46 @@ def update_photos(user, subject_id):
 
 def open_image(filename):
     try:
-        image = Image.open(filename + ".jpg")
+        temp = Image.open(filename + ".jpg")
     except FileNotFoundError:
         try:
-            image = Image.open(filename + ".jpeg")
+            temp = Image.open(filename + ".png")
+            temp = temp.convert('RGB')
         except FileNotFoundError:
-            image = Image.open(filename + ".png")
-            image = image.convert('RGB')
+            temp = Image.open(filename + ".jpeg")
+    image = temp.copy()
+    temp.close()
     return image
 
 
 def create_pdf(user, subject_id, idx):
     im_list = []
+    pdf_list = []
     directory = 'photos' + v.DEL + v.folders[subject_id] + v.DEL + str(user.user_id)
-    im1 = open_image(directory + v.DEL + "1")
-
-    for i in range(idx - 2):
-        im_list.append(open_image(directory + v.DEL + str(i + 2)))
-    pdf_filename = directory + v.DEL + v.folders[subject_id] + "_" + user.first_name + ".pdf"
-    im1.save(pdf_filename, "PDF", resolution=100.0, save_all=True, append_images=im_list)
-    return pdf_filename
+    iterations = int(idx / 20) + 1
+    for i in range(iterations):
+        im1 = open_image(directory + v.DEL + str(20 * i + 1))
+        j = 2
+        while j < 21:
+            page_number = 20 * i + j
+            if page_number > idx - 1:
+                break
+            im_list.append(open_image(directory + v.DEL + str(page_number)))
+            j += 1
+        pdf_filename = directory + v.DEL + v.folders[subject_id] + "_" + user.first_name + "_" + str(i + 1) + ".pdf"
+        im1.save(pdf_filename, "PDF", resolution=100.0, save_all=True, append_images=im_list)
+        pdf_list.append(pdf_filename)
+        im1.close()
+        im_list.clear()
+    return pdf_list
 
 
 def write_pdf_id(user, subject_id, doc):
-    f = open('photos' + v.DEL + v.folders[subject_id] + v.DEL + v.folders[subject_id] + '.csv', 'r')
+    filename = 'photos' + v.DEL + v.folders[subject_id] + v.DEL + v.folders[subject_id] + '.csv'
+    f = open(filename, 'r', encoding='utf-8')
     lines = proc.remove_line_by_id(f, str(user.user_id))
     f.close()
-    f = open('photos' + v.DEL + v.folders[subject_id] + v.DEL + v.folders[subject_id] + '.csv', 'w')
+    f = open(filename, 'w', encoding='utf-8')
     tz = pytz.timezone('Europe/Minsk')
     now = datetime.datetime.now(tz)
     f.write(lines + str(user.user_id) + ',' + user.first_name + "," + doc.document.file_id + ',' +
