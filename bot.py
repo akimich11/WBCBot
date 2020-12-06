@@ -49,7 +49,7 @@ def send_users(message):
     if message.from_user.first_name == "Аким":
         s = "Список пользователей бота:\n\n"
         for user in v.users:
-            s += user.first_name + "\n"
+            s += str(user.user_id) + " " + user.first_name + "\n"
         v.bot.send_message(message.chat.id, s)
 
 
