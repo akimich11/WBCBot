@@ -1,7 +1,7 @@
 import telebot
 from enum import Enum
 
-bot = telebot.TeleBot('972251801:AAEC8f-WjE1QG1s-36y2Jgk0zniwrbv5KLE', threaded=False)
+bot = telebot.TeleBot('1165511829:AAHAp5NsBFMvbYzNjTzeU0Esl0nDS-XYBXY', threaded=False)
 users = []
 DEL = '/'
 phrase1 = "Найти дз"
