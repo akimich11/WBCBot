@@ -7,7 +7,7 @@ def get_user(message):
     for i in v.users:
         if i.user_id == message.from_user.id:
             return i
-    user = v.User(message.from_user.id, message.from_user.first_name)
+    user = v.User(message)
     v.users.append(user)
     return user
 

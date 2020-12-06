@@ -46,10 +46,13 @@ def welcome(message):
 
 @v.bot.message_handler(commands=['users'])
 def send_users(message):
-    if message.from_user.first_name == "Аким":
+    if message.from_user.id == 270241310:
         s = "Список пользователей бота:\n\n"
         for user in v.users:
-            s += str(user.user_id) + " " + user.first_name + "\n"
+            if user.username != "":
+                s += str(user.user_id) + " " + user.first_name + " " + user.last_name + " @" + user.username + "\n"
+            else:
+                s += str(user.user_id) + " " + user.first_name + " " + user.last_name + "\n"
         v.bot.send_message(message.chat.id, s)
 
 
@@ -116,10 +119,12 @@ def callback_inline(call):
         button_index = int(call.data) - 1
 
         if user.button_state == v.Button.SEND:
+            v.bot.edit_message_text("Идёт загрузка фотографий...", user.user_id, call.message.message_id,
+                                    reply_markup=None)
             old_index, new_index = pdf.update_photos(user, button_index)
+            v.bot.edit_message_text("Идёт создание pdf...", user.user_id, call.message.message_id)
             filenames = pdf.create_pdf(user, button_index, old_index, new_index)
-            v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
-                                    text="Фотографии добавлены", reply_markup=None)
+            v.bot.edit_message_text("Тетрадка загружена", user.user_id, call.message.message_id)
             docs = []
             for filename in filenames:
                 docs.append(v.bot.send_document(call.message.chat.id, open(filename, "rb")))

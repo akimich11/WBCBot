@@ -1,7 +1,7 @@
 import telebot
 from enum import Enum
 
-bot = telebot.TeleBot('1165511829:AAHAp5NsBFMvbYzNjTzeU0Esl0nDS-XYBXY', threaded=False)
+bot = telebot.TeleBot('972251801:AAEC8f-WjE1QG1s-36y2Jgk0zniwrbv5KLE', threaded=False)
 users = []
 DEL = '/'
 phrase1 = "Найти дз"
@@ -28,11 +28,15 @@ class Button(Enum):
 class User:
     user_id = 0
     first_name = ""
+    last_name = ""
+    username = ""
     subject_id = -1
     photos = []
     files = []
     button_state = Button(3)
 
-    def __init__(self, user_id, first_name):
-        self.user_id = user_id
-        self.first_name = first_name
+    def __init__(self, message):
+        self.user_id = message.from_user.id
+        self.first_name = message.from_user.first_name
+        self.last_name = message.from_user.last_name
+        self.username = message.from_user.username
