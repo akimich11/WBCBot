@@ -1,9 +1,6 @@
-import processes as proc
 import variables as v
 import os
 import glob
-import pytz
-import datetime
 from PIL import Image
 
 
@@ -37,8 +34,10 @@ def update_photos(user, subject_id):
                 max_el = a
         idx = max_el + 1
     directory = parent_dir + v.DEL + directory
+    old_index = idx
     idx = download_files(user.photos, directory, idx)
-    return download_files(user.files, directory, idx)
+    new_index = download_files(user.files, directory, idx)
+    return [old_index, new_index]
 
 
 def open_image(filename):
@@ -55,36 +54,36 @@ def open_image(filename):
     return image
 
 
-def create_pdf(user, subject_id, idx):
+def create_pdf(user, subject_id, old_index, new_index):
     im_list = []
     pdf_list = []
-    directory = 'photos' + v.DEL + v.folders[subject_id] + v.DEL + str(user.user_id)
-    iterations = int(idx / 20) + 1
+    directory = 'photos' + v.DEL + v.folders[subject_id] + v.DEL + str(user.user_id) + v.DEL
+
+    new_photos = new_index - old_index
+    remainder = (old_index - 1) % 20
+    append_number = new_photos + remainder
+    start_position = new_index - append_number
+    complete_pdfs = int((old_index - 1) / 20)
+    pdfs_to_write = int((new_index - 1) / 20) - complete_pdfs
+
+    iterations = int(append_number / 20) + 1
     for i in range(iterations):
-        im1 = open_image(directory + v.DEL + str(20 * i + 1))
-        j = 2
+        if i == 0:
+            im1 = open_image(directory + str(start_position))
+            j = (start_position + 1) % 20
+        else:
+            im1 = open_image(directory + str(20 * (complete_pdfs + i) + 1))
+            j = 2
         while j < 21:
-            page_number = 20 * i + j
-            if page_number > idx - 1:
+            page_number = 20 * (complete_pdfs + i) + j
+            if page_number > new_index - 1:
                 break
-            im_list.append(open_image(directory + v.DEL + str(page_number)))
+            im_list.append(open_image(directory + str(page_number)))
             j += 1
-        pdf_filename = directory + v.DEL + v.folders[subject_id] + "_" + user.first_name + "_" + str(i + 1) + ".pdf"
+        pdf_filename = directory + v.folders[subject_id] + "_" + user.first_name + "_" \
+                       + str(complete_pdfs + i + 1) + ".pdf "
         im1.save(pdf_filename, "PDF", resolution=100.0, save_all=True, append_images=im_list)
         pdf_list.append(pdf_filename)
         im1.close()
         im_list.clear()
-    return pdf_list
-
-
-def write_pdf_id(user, subject_id, doc):
-    filename = 'photos' + v.DEL + v.folders[subject_id] + v.DEL + v.folders[subject_id] + '.csv'
-    f = open(filename, 'r', encoding='utf-8')
-    lines = proc.remove_line_by_id(f, str(user.user_id))
-    f.close()
-    f = open(filename, 'w', encoding='utf-8')
-    tz = pytz.timezone('Europe/Minsk')
-    now = datetime.datetime.now(tz)
-    f.write(lines + str(user.user_id) + ',' + user.first_name + "," + doc.document.file_id + ',' +
-            now.strftime("%d-%m-%Y  %H:%M") + '\n')
-    f.close()
+    return [pdf_list, pdfs_to_write]

@@ -1,5 +1,5 @@
 import pdf_maker as pdf
-import processes as proc
+import file_processing as file
 import variables as v
 from telebot import types
 
@@ -23,38 +23,64 @@ def create_markup(message):
     v.bot.send_message(message.chat.id, 'Из какой тетрадки?', reply_markup=markup)
 
 
+def send_cycle(user):
+    user.button_state = v.Button.NONE
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    item1 = types.KeyboardButton(v.phrase1)
+    item2 = types.KeyboardButton(v.phrase2)
+    markup.add(item1, item2)
+    v.bot.send_message(user.user_id, "Что-нибудь ещё?", reply_markup=markup)
+
+
 @v.bot.message_handler(commands=['start'])
 def welcome(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     item1 = types.KeyboardButton(v.phrase1)
     item2 = types.KeyboardButton(v.phrase2)
     markup.add(item1, item2)
-    v.bot.send_message(message.chat.id, "Привет. Я бот. Буду организовывать обмен тетрадками между вами. "
-                                        "Работаю по принципу буккроссинга: можно брать тетрадки, можно делиться ими."
-                                        " Надеюсь, понятно, что если никто не будет делиться тетрадками, то и брать"
-                                        " будет нечего. Так что надеюсь на вашу совесть")
+    v.bot.send_message(message.chat.id, "Встречайте, бот с тетрадками, версия 2.0.\n"
+                                        "Вот изменилось по сравнению с предыдущей версией:\n\n"
+                                        "1. Теперь фотографии можно загружать в том числе в виде файлов. "
+                                        "Поддерживаются форматы jpg и png.\n"
+                                        "2. Также добавлена поддержка pdf-файлов. "
+                                        "Они добавляются как отдельная тетрадка и не объединяется с фотографиями\n"
+                                        '3. Изменена система получения тетрадок. Теперь вместо кнопки "Поискать"'
+                                        "выводится список тетрадок, из которого можно выбрать нужную\n"
+                                        "4. Чтобы снизить нагрузку на сервер, большие тетрадки теперь "
+                                        "хранятся файлами по 20 страниц.\n"
+                                        "5. Улучшена стабильность бота, исправлены мелкие баги")
     v.bot.send_message(message.chat.id, "Что ты хочешь сделать?", reply_markup=markup)
+
+
+@v.bot.message_handler(commands=['users'])
+def send_users(message):
+    if message.from_user.first_name == "Аким":
+        s = "Список пользователей бота:\n\n"
+        for user in v.users:
+            s += user.first_name + "\n"
+        v.bot.send_message(message.chat.id, s)
 
 
 @v.bot.message_handler(content_types=['photo'])
 def append_photo(message):
-    user = proc.get_user(message)
+    user = file.get_user(message)
     user.photos.append(message.photo[-1].file_id)
 
 
 @v.bot.message_handler(content_types=['document'])
 def append_file(message):
-    user = proc.get_user(message)
+    user = file.get_user(message)
     extension = message.document.file_name.split(".")[1]
     if extension.lower() in v.accepted_formats:
         user.files.append(message.document.file_id)
     else:
+        v.bot.send_message(message.chat.id, message.document.file_id)
         v.bot.send_message(message.chat.id, "Расширение файла (" + extension + ") не поддерживается")
 
 
 @v.bot.message_handler(content_types=['text'])
 def reply(message):
-    user = proc.get_user(message)
+    user = file.get_user(message)
 
     if message.text == v.phrase1:
         user.button_state = v.Button.FIND
@@ -81,37 +107,38 @@ def reply(message):
         user.photos.clear()
         user.files.clear()
         user.subject_id = -1
-        proc.send_cycle(user)
+        send_cycle(user)
 
     elif user.subject_id != -1:
         key = int(message.text)
-        file_id = proc.get_file_id(user.subject_id, key - 1)
+        file_id = file.get_file_id(user.subject_id, key - 1)
         v.bot.send_document(user.user_id, file_id)
         user.subject_id = -1
-        proc.send_cycle(user)
+        send_cycle(user)
 
 
 @v.bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     if call.message:
-        user = proc.get_user(call)
+        user = file.get_user(call)
         button_index = int(call.data) - 1
 
         if user.button_state == v.Button.SEND:
-            idx = pdf.update_photos(user, button_index)
-            filenames = pdf.create_pdf(user, button_index, idx)
+            old_index, new_index = pdf.update_photos(user, button_index)
+            filenames, pdfs_to_write = pdf.create_pdf(user, button_index, old_index, new_index)
             v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
                                     text="Фотографии добавлены", reply_markup=None)
+            docs = []
             for filename in filenames:
-                doc_id = v.bot.send_document(call.message.chat.id, open(filename, "rb"))
-                pdf.write_pdf_id(user, button_index, doc_id)
-            proc.send_cycle(user)
+                docs.append(v.bot.send_document(call.message.chat.id, open(filename, "rb")))
+            file.write_pdf_id(user, button_index, docs, pdfs_to_write)
+            send_cycle(user)
 
         elif user.button_state == v.Button.FIND:
             v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
                                     text="Ок ща поищу", reply_markup=None)
 
-            docs, lines_number = proc.get_documents_list(button_index)
+            docs, lines_number = file.get_documents_list(button_index)
             items = ["отмена"]
             for i in range(lines_number):
                 items.append(str(i + 1))
