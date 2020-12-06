@@ -1,9 +1,9 @@
 import telebot
 from enum import Enum
 
-bot = telebot.TeleBot('1165511829:AAFV6MBiSUdIbxr6GVQ51B01Qhm9vz2psF4', threaded=False)
+bot = telebot.TeleBot('1165511829:AAHAp5NsBFMvbYzNjTzeU0Esl0nDS-XYBXY', threaded=False)
 users = []
-DEL = '/'
+DEL = '\\'
 phrase1 = "Найти дз"
 phrase2 = "Отправить тетрадку"
 accepted_formats = ("jpg", "jpeg", "png")

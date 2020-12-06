@@ -64,9 +64,8 @@ def create_pdf(user, subject_id, old_index, new_index):
     append_number = new_photos + remainder
     start_position = new_index - append_number
     complete_pdfs = int((old_index - 1) / 20)
-    pdfs_to_write = int((new_index - 1) / 20) - complete_pdfs
 
-    iterations = int(append_number / 20) + 1
+    iterations = int(append_number / 21) + 1
     for i in range(iterations):
         if i == 0:
             im1 = open_image(directory + str(start_position))
@@ -86,4 +85,4 @@ def create_pdf(user, subject_id, old_index, new_index):
         pdf_list.append(pdf_filename)
         im1.close()
         im_list.clear()
-    return [pdf_list, pdfs_to_write]
+    return pdf_list

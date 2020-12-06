@@ -38,17 +38,9 @@ def welcome(message):
     item1 = types.KeyboardButton(v.phrase1)
     item2 = types.KeyboardButton(v.phrase2)
     markup.add(item1, item2)
-    v.bot.send_message(message.chat.id, "Встречайте, бот с тетрадками, версия 2.0.\n"
-                                        "Вот изменилось по сравнению с предыдущей версией:\n\n"
-                                        "1. Теперь фотографии можно загружать в том числе в виде файлов. "
-                                        "Поддерживаются форматы jpg и png.\n"
-                                        "2. Также добавлена поддержка pdf-файлов. "
-                                        "Они добавляются как отдельная тетрадка и не объединяется с фотографиями\n"
-                                        '3. Изменена система получения тетрадок. Теперь вместо кнопки "Поискать"'
-                                        "выводится список тетрадок, из которого можно выбрать нужную\n"
-                                        "4. Чтобы снизить нагрузку на сервер, большие тетрадки теперь "
-                                        "хранятся файлами по 20 страниц.\n"
-                                        "5. Улучшена стабильность бота, исправлены мелкие баги")
+    with open("changelog.txt", encoding='utf-8') as f:
+        v.bot.send_message(message.chat.id, "Привет, я бот с тетрадками, версия 2.0.\n"
+                                            "Вот изменилось по сравнению с предыдущей версией:\n\n" + f.read())
     v.bot.send_message(message.chat.id, "Что ты хочешь сделать?", reply_markup=markup)
 
 
@@ -74,7 +66,6 @@ def append_file(message):
     if extension.lower() in v.accepted_formats:
         user.files.append(message.document.file_id)
     else:
-        v.bot.send_message(message.chat.id, message.document.file_id)
         v.bot.send_message(message.chat.id, "Расширение файла (" + extension + ") не поддерживается")
 
 
@@ -111,8 +102,9 @@ def reply(message):
 
     elif user.subject_id != -1:
         key = int(message.text)
-        file_id = file.get_file_id(user.subject_id, key - 1)
-        v.bot.send_document(user.user_id, file_id)
+        files = file.get_file_id(user.subject_id, key - 1)
+        for file_id in files:
+            v.bot.send_document(user.user_id, file_id)
         user.subject_id = -1
         send_cycle(user)
 
@@ -125,13 +117,13 @@ def callback_inline(call):
 
         if user.button_state == v.Button.SEND:
             old_index, new_index = pdf.update_photos(user, button_index)
-            filenames, pdfs_to_write = pdf.create_pdf(user, button_index, old_index, new_index)
+            filenames = pdf.create_pdf(user, button_index, old_index, new_index)
             v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
                                     text="Фотографии добавлены", reply_markup=None)
             docs = []
             for filename in filenames:
                 docs.append(v.bot.send_document(call.message.chat.id, open(filename, "rb")))
-            file.write_pdf_id(user, button_index, docs, pdfs_to_write)
+            file.write_pdf_id(docs, user, button_index, old_index)
             send_cycle(user)
 
         elif user.button_state == v.Button.FIND:
