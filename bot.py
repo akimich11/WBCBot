@@ -49,10 +49,10 @@ def send_users(message):
     if message.from_user.id == 270241310:
         s = "Список пользователей бота:\n\n"
         for user in v.users:
-            if user.username != "":
-                s += str(user.user_id) + " " + user.first_name + " " + user.last_name + " @" + user.username + "\n"
+            if user.username is not None:
+                s += str(user.user_id) + " " + user.first_name + " " + str(user.last_name) + " @" + user.username + "\n"
             else:
-                s += str(user.user_id) + " " + user.first_name + " " + user.last_name + "\n"
+                s += str(user.user_id) + " " + user.first_name + " " + str(user.last_name) + "\n"
         v.bot.send_message(message.chat.id, s)
 
 
