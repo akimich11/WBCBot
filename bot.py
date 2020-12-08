@@ -7,7 +7,7 @@ if __name__ == '__main__':
     v.bot.send_message(270241310, "перезагрузился")
 
 
-def create_markup(message):
+def send_markup(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
     item1 = types.InlineKeyboardButton("МА практика", callback_data='1')
     item2 = types.InlineKeyboardButton("ДУ практика", callback_data='2')
@@ -30,6 +30,18 @@ def send_cycle(user):
     item2 = types.KeyboardButton(v.phrase2)
     markup.add(item1, item2)
     v.bot.send_message(user.user_id, "Что-нибудь ещё?", reply_markup=markup)
+
+
+def send_group(user, files):
+    if len(files) > 1:
+        input_documents = []
+        for file_id in files:
+            input_documents.append(types.InputMediaDocument(file_id))
+        groups = [input_documents[i: i + 10] for i in range(0, len(input_documents), 10)]
+        for group in groups:
+            v.bot.send_media_group(user.user_id, group)
+    elif len(files) == 1:
+        v.bot.send_document(user.user_id, files[0])
 
 
 @v.bot.message_handler(commands=['start'])
@@ -78,7 +90,7 @@ def reply(message):
 
     if message.text == v.phrase1:
         user.button_state = v.Button.FIND
-        create_markup(message)
+        send_markup(message)
 
     elif message.text == v.phrase2:
         user.button_state = v.Button.SEND
@@ -95,7 +107,7 @@ def reply(message):
         if len(user.photos) == 0 and len(user.files) == 0:
             v.bot.send_message(message.chat.id, "Сначала скинь фотки")
         else:
-            create_markup(message)
+            send_markup(message)
 
     elif message.text == "отмена":
         user.photos.clear()
@@ -106,16 +118,8 @@ def reply(message):
     elif user.subject_id != -1:
         key = int(message.text)
         files = file.get_file_id(user.subject_id, key - 1)
-        if len(files) > 1:
-            input_documents = []
-            for file_id in files:
-                input_documents.append(types.InputMediaDocument(file_id))
-            groups = [input_documents[i: i + 10] for i in range(0, len(input_documents), 10)]
-            for group in groups:
-                v.bot.send_media_group(user.user_id, group)
-        elif len(files) == 1:
-            v.bot.send_document(user.user_id, files[0])
         user.subject_id = -1
+        send_group(user, files)
         send_cycle(user)
 
 
@@ -139,18 +143,21 @@ def callback_inline(call):
             send_cycle(user)
 
         elif user.button_state == v.Button.FIND:
-            v.bot.edit_message_text(chat_id=user.user_id, message_id=call.message.message_id,
-                                    text="Ок ща поищу", reply_markup=None)
+            v.bot.delete_message(user.user_id, call.message.message_id)
 
             docs, lines_number = file.get_documents_list(button_index)
-            items = ["отмена"]
-            for i in range(lines_number):
-                items.append(str(i + 1))
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=4)
-            markup.add(*items)
-            v.bot.send_message(user.user_id, "Вот что у меня есть по предмету " + docs + "\nЧто тебе нужно?",
-                               reply_markup=markup)
-            user.subject_id = button_index
+            if lines_number != 0:
+                items = ["отмена"]
+                for i in range(lines_number):
+                    items.append(str(i + 1))
+                markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=4)
+                markup.add(*items)
+                v.bot.send_message(user.user_id, "Вот что у меня есть по предмету " + docs + "\nЧто тебе нужно?",
+                                   reply_markup=markup)
+                user.subject_id = button_index
+            else:
+                v.bot.send_message(user.user_id, "Ничего не нашёл :(")
+                send_cycle(user)
 
 
 v.bot.polling(none_stop=True)
