@@ -106,8 +106,15 @@ def reply(message):
     elif user.subject_id != -1:
         key = int(message.text)
         files = file.get_file_id(user.subject_id, key - 1)
-        for file_id in files:
-            v.bot.send_document(user.user_id, file_id)
+        if len(files) > 1:
+            input_documents = []
+            for file_id in files:
+                input_documents.append(types.InputMediaDocument(file_id))
+            groups = [input_documents[i: i + 10] for i in range(0, len(input_documents), 10)]
+            for group in groups:
+                v.bot.send_media_group(user.user_id, group)
+        elif len(files) == 1:
+            v.bot.send_document(user.user_id, files[0])
         user.subject_id = -1
         send_cycle(user)
 
