@@ -18,11 +18,12 @@ def bisect(a, x, lo=0):
 
 def get_user(message):
     index = bisect(v.users, message.from_user.id)
-    if index != -1 and v.users[index].user_id == message.from_user.id:
+    try:
         return v.users[index]
-    user = v.User(message)
-    v.users.insert(index, user)
-    return user
+    except IndexError:
+        user = v.User(message)
+        v.users.insert(index, user)
+        return user
 
 
 def get_file_id(subject, number_of_line):
