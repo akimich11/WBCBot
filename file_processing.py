@@ -3,12 +3,25 @@ import pytz
 import datetime
 
 
+def bisect(a, x, lo=0):
+    hi = len(a)
+    if hi == 0:
+        return -1
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if a[mid].user_id < x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
 def get_user(message):
-    for i in v.users:
-        if i.user_id == message.from_user.id:
-            return i
+    index = bisect(v.users, message.from_user.id)
+    if index != -1 and v.users[index].user_id == message.from_user.id:
+        return v.users[index]
     user = v.User(message)
-    v.users.append(user)
+    v.users.insert(index, user)
     return user
 
 
@@ -19,8 +32,8 @@ def get_file_id(subject, number_of_line):
     file.close()
     id_list = []
     try:
-        user_id, first_name, change_date = file_data.split("\n")[number_of_line].split(",")
-        with open(directory + user_id + v.DEL + first_name + ".txt") as file:
+        user_id = file_data.split("\n")[number_of_line].split(",")[0]
+        with open(directory + user_id + v.DEL + user_id + ".txt") as file:
             id_list = file.read().split("\n")
         id_list.remove("")
     except IndexError:

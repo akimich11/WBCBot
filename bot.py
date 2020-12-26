@@ -51,7 +51,7 @@ def welcome(message):
     item2 = types.KeyboardButton(v.phrase2)
     markup.add(item1, item2)
     with open("changelog.txt", encoding='utf-8') as f:
-        v.bot.send_message(message.chat.id, "Привет, я бот с тетрадками, версия 2.0.\n"
+        v.bot.send_message(message.chat.id, "Привет, я бот с тетрадками, версия 2.1.\n"
                                             "Вот изменилось по сравнению с предыдущей версией:\n\n" + f.read())
     v.bot.send_message(message.chat.id, "Что ты хочешь сделать?", reply_markup=markup)
 

@@ -61,11 +61,11 @@ def create_pdf(user, subject_id, old_index, new_index):
 
     new_photos = new_index - old_index
     remainder = (old_index - 1) % 20
-    append_number = new_photos + remainder
-    start_position = new_index - append_number
-    complete_pdfs = int((old_index - 1) / 20)
+    photos_to_append = new_photos + remainder
+    start_position = new_index - photos_to_append
+    complete_pdfs = (old_index - 1) // 20
 
-    iterations = int(append_number / 21) + 1
+    iterations = (photos_to_append - 1) // 20 + 1
     for i in range(iterations):
         if i == 0:
             im1 = open_image(directory + str(start_position))
