@@ -9,17 +9,8 @@ if __name__ == '__main__':
 
 def send_markup(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    item1 = types.InlineKeyboardButton("МА практика", callback_data='1')
-    item2 = types.InlineKeyboardButton("ДУ практика", callback_data='2')
-    item3 = types.InlineKeyboardButton("ДМиМЛ практика", callback_data='3')
-    item4 = types.InlineKeyboardButton("ВМА практика", callback_data='4')
-    item5 = types.InlineKeyboardButton("МА конспект", callback_data='5')
-    item6 = types.InlineKeyboardButton("ДУ конспект", callback_data='6')
-    item7 = types.InlineKeyboardButton("ДМиМЛ конспект", callback_data='7')
-    item8 = types.InlineKeyboardButton("ВМА конспект", callback_data='8')
-    item9 = types.InlineKeyboardButton("Другое", callback_data='9')
-
-    markup.add(item1, item2, item3, item4, item5, item6, item7, item8, item9)
+    items = [types.InlineKeyboardButton(v.folders[i], callback_data=str(i)) for i in range(len(v.folders))]
+    markup.add(*items)
     v.bot.send_message(message.chat.id, 'Из какой тетрадки?', reply_markup=markup)
 
 
@@ -51,7 +42,7 @@ def welcome(message):
     item2 = types.KeyboardButton(v.phrase2)
     markup.add(item1, item2)
     with open("changelog.txt", encoding='utf-8') as f:
-        v.bot.send_message(message.chat.id, "Привет, я бот с тетрадками, версия 2.1.\n"
+        v.bot.send_message(message.chat.id, "Привет, я бот с тетрадками, версия 2.1 патч 2.\n"
                                             "Вот изменилось по сравнению с предыдущей версией:\n\n" + f.read())
     v.bot.send_message(message.chat.id, "Что ты хочешь сделать?", reply_markup=markup)
 
