@@ -30,17 +30,12 @@ class Button(Enum):
 
 
 class User:
-    user_id = 0
-    first_name = ""
-    last_name = ""
-    username = ""
-    subject_id = -1
-    photos = []
-    files = []
-    button_state = Button(3)
-
     def __init__(self, message):
         self.user_id = message.from_user.id
         self.first_name = message.from_user.first_name
         self.last_name = message.from_user.last_name
         self.username = message.from_user.username
+        self.subject_id = -1
+        self.photos = []
+        self.files = []
+        self.button_state = Button(3)
