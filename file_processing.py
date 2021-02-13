@@ -96,7 +96,7 @@ def write_pdf_id(docs, user, subject_id, old_index):
         now = datetime.datetime.now(tz)
         f.write(lines + str(user.user_id) + ',' + user.first_name + ',' + now.strftime("%d.%m.%Y в %H:%M") + '\n')
 
-    student_files = directory + str(user.user_id) + v.DEL + user.user_id + '.txt'
+    student_files = directory + str(user.user_id) + v.DEL + str(user.user_id) + '.txt'
     if old_index % 20 != 1:
         lines = remove_last_line(student_files)
         f = open(student_files, "w", encoding='utf-8')

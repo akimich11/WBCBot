@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
 def send_markup(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    items = [types.InlineKeyboardButton(v.folders[i], callback_data=str(i)) for i in range(len(v.folders))]
+    items = [types.InlineKeyboardButton(v.folders[i], callback_data=str(i + 1)) for i in range(len(v.folders))]
     markup.add(*items)
     v.bot.send_message(message.chat.id, 'Из какой тетрадки?', reply_markup=markup)
 
